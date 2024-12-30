@@ -19,7 +19,6 @@ package controller
 import (
 	"context"
 	"fmt"
-	"time"
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -143,15 +142,17 @@ func (r *MemcachedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		log.Info("Creating a new Deployment",
 			"Deployment.Namespace", dep.Namespace, "Deployment.Name", dep.Name)
 		if err = r.Create(ctx, dep); err != nil {
-			log.Error(err, "Failed to create new Deployment",
-				"Deployment.Namespace", dep.Namespace, "Deployment.Name", dep.Name)
-			return ctrl.Result{}, err
+			if !apierrors.IsAlreadyExists(err) {
+				log.Error(err, "Failed to create new Deployment",
+					"Deployment.Namespace", dep.Namespace, "Deployment.Name", dep.Name)
+				return ctrl.Result{}, err
+			}
+			// If deployment already exists, continue with reconciliation
+			log.Info("Deployment already exists, continuing reconciliation")
 		}
 
-		// Deployment created successfully
-		// We will requeue the reconciliation so that we can ensure the state
-		// and move forward for the next operations
-		return ctrl.Result{RequeueAfter: time.Minute}, nil
+		// Change this to not requeue immediately
+		return ctrl.Result{}, nil
 	} else if err != nil {
 		log.Error(err, "Failed to get Deployment")
 		// Let's return the error for the reconciliation be re-trigged again

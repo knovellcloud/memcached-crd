@@ -33,6 +33,9 @@ make install
 
 ```sh
 make deploy IMG=<some-registry>/memcached-crd:tag
+
+# run Manager locally
+make run
 ```
 
 > **NOTE**: If you encounter RBAC errors, you may need to grant yourself cluster-admin
